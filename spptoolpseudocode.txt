@@ -1,0 +1,49 @@
+installer:
+requests administrator privileges
+message "before continuing its recommended to enable secure boot setup mode in the uefi firmware"
+generates ca
+generates platform key
+generates code signing certificate
+installs certificates
+signs executables
+stashes private keys
+install persist driver
+install code integrity policy
+enable persist service
+set setup type to 1
+set initial_setup_script to run on startup
+
+checks if secure boot is in setup mode
+if true do
+ sets secure boot keys
+ switches to user mode
+else do
+ copies platform key to efi system partition
+ message "installer was unable to install the platform key. you will need to install it manually. the computer will reboot into uefi firmware. the platform key is located on the efi system partition in a file named PK"
+ wait for confirmation
+ reboot into uefi
+end
+
+initial_setup_script:
+disable spp in registry
+set sppsvc to manual
+disable software protection tasks
+load product policy profile.dat and verify if exists
+enable codeintegrity and cks
+save product policy profile.dat and sign
+set setup type to 0
+reboot
+
+spp_event:
+# cat and mouse game
+load product policy profile
+set variables in kernel
+set variables in registry
+
+driver_failed:
+prompt user with notification
+message "the product policy has changed, thus the driver has failed to load. the computer must reboot"
+verify profile.dat signature
+otherwise delete
+set setup type to 1
+set initial_setup_script to run on startup
